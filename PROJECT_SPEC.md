@@ -45,6 +45,8 @@ The MVP will not claim that LLM-generated questions are official board questions
 
 The MVP will not fabricate evaluation metrics, token usage, or official source coverage.
 
+Case-based questions are a stretch goal. The MVP must support MCQ, short answer, and long answer questions first.
+
 ---
 
 ## 4. Target Users
@@ -64,7 +66,7 @@ Secondary users:
 
 ## 5. Core Modules
 
-The system will contain the following modules:
+The system will contain the following product modules:
 
 1. Syllabus ingestion
 2. RAG-based retrieval
@@ -75,13 +77,34 @@ The system will contain the following modules:
 7. Personalized remediation
 8. Tutor chatbot
 9. UI / integration layer
+
+The project will also contain the following infrastructure and evidence modules:
+
 10. Trust & Evaluation Dashboard
+11. Evaluation harness
+12. Agentic evidence tracking
+
+Folder mapping:
+
+- src/ingestion/ maps to Syllabus ingestion.
+- src/rag/ maps to RAG-based retrieval.
+- src/generator/ maps to Practice paper generation.
+- src/tagging/ maps to Question tagging and difficulty classification.
+- src/evaluation/ maps to Automatic answer evaluation.
+- src/analytics/ maps to Weakness detection and mastery tracking.
+- src/tutor/ maps to Personalized remediation and Tutor chatbot.
+- src/api/ maps to UI / integration layer.
+- src/evaluation_harness/ maps to Evaluation harness and Trust Dashboard support.
+
+Delivery target:
+
+The MVP user interface will be implemented using Streamlit or a simple API-backed UI. The final choice must be recorded in ARCHITECTURE.md before UI implementation begins.
 
 Each module must have a module-specific SPEC file before implementation begins.
 
 ---
 
-## 6. Data Model
+## 6. Data Model and Source Governance
 
 The syllabus will be represented using the following hierarchy:
 
@@ -111,6 +134,14 @@ Example conceptual record:
 - source_id: cbse_math_10_syllabus
 - chunk_id: cbse_math_10_quad_eq_chunk_01
 
+Source governance rules:
+
+- All source documents used for syllabus, study material, sample questions, answer keys, and rubrics must be listed in data/sources.md before ingestion.
+- Source entries must include source_id, title, board, grade, subject, source type, and review status.
+- Curated study material must be human-reviewed before it is treated as reliable retrieval context.
+- Answer keys must be human-authored or human-reviewed before being used for evaluation.
+- Rubrics and marking schemes must be human-authored or human-reviewed. LLM-generated rubrics must not be used as the sole grading authority.
+
 The system should store source metadata wherever AI generation depends on external or curriculum-specific content.
 
 ---
@@ -139,9 +170,15 @@ Each retrieved chunk must include metadata:
 
 Generated answers should include source references wherever possible.
 
+For the MVP, retrieval confidence is treated as low if the top retrieved chunk score is below the threshold selected in the RAG module spec. The initial default threshold is 0.60 cosine similarity for embedding-based retrieval. The RAG module owner may adjust this threshold after testing, but the reason must be documented in the RAG module spec or evaluation notes.
+
 If retrieval confidence is low, the system must not confidently answer. It should either ask for clarification or return a controlled message saying that the query is outside the current syllabus scope.
 
 Out-of-syllabus queries must be detected and flagged.
+
+For every non-trivial tutor answer, the system must log retrieved chunk IDs. A response fails the grounding check if no retrieved chunk is attached.
+
+The MVP corpus must contain at least 5 indexed chunks per selected chapter.
 
 The system must avoid generating unsupported facts that are not grounded in the selected board, grade, subject, and chapter context.
 
@@ -161,12 +198,15 @@ Inputs:
 - difficulty distribution
 - question type distribution
 
-Supported question types:
+MVP-supported question types:
 
 - MCQ
 - short answer
 - long answer
-- case-based question, if feasible in MVP
+
+Stretch question type:
+
+- case-based question
 
 Each generated question must include:
 
@@ -189,6 +229,12 @@ The generator must not create questions from chapters or topics outside the sele
 
 Generated questions should be traceable to retrieved syllabus chunks or sample question patterns.
 
+Verification rules:
+
+- A unit test or verification script must assert that generated paper marks sum to the requested total.
+- source_context_id must refer to an indexed chunk or approved sample-question source.
+- The evaluation harness must check that at least 90% of generated questions in the MVP demo carry a valid source_context_id.
+
 ---
 
 ## 9. Answer Evaluation Rules
@@ -208,6 +254,8 @@ The evaluator must output:
 - rubric_id or marking_scheme_id, wherever applicable
 
 For Mathematics, the evaluator should support step-wise scoring where feasible.
+
+For the MVP, step-wise scoring must be demonstrated for at least one worked Mathematics question from one selected chapter. Other subjective questions may use rubric-based scoring.
 
 Example scoring dimensions:
 
@@ -241,6 +289,13 @@ For each student attempt, the system should update:
 - number of attempts
 - mistake type, if available
 
+Student confidence may be captured in two ways:
+
+- self-reported confidence, if the UI asks the student after an attempt
+- system-inferred confidence, estimated from score, time taken, attempts, and difficulty
+
+For the MVP, system-inferred confidence is sufficient. The formula must be documented in the analytics module spec.
+
 Weakness detection should identify topics where the student shows:
 
 - low accuracy
@@ -249,11 +304,15 @@ Weakness detection should identify topics where the student shows:
 - low confidence
 - poor performance on application or reasoning questions
 
+Weak-area summaries must be derived from stored attempt data such as topic accuracy, score, time taken, and mistake type. They must not be open-ended unsupported generation.
+
 The system should produce a weak-area summary such as:
 
 "The student is weak in Applications of Trigonometry. Formula recall is acceptable, but mistakes occur in diagram interpretation and selecting the correct trigonometric ratio."
 
 For the MVP, a simple mastery score is acceptable. Full Bayesian Knowledge Tracing can be discussed as an extension if not fully implemented.
+
+The test fixture for weakness detection must include a small JSON file of simulated student attempts. The analytics module must use this fixture to verify that the weakest topic is identified correctly.
 
 ---
 
@@ -268,7 +327,9 @@ Supported remediation outputs:
 - 5-minute revision card
 - extra practice questions
 - step-by-step explanation
-- suggested learning path
+- static prerequisite-based learning path within the selected chapters
+
+Formula sheets and short notes must be generated from verified retrieved chunks, not from the LLM's parametric memory alone.
 
 The tutor chatbot must answer according to the selected:
 
@@ -295,6 +356,8 @@ The chatbot must not hallucinate textbook claims, marking rules, or board-specif
 
 The Trust & Evaluation Dashboard is a professor-facing and developer-facing feature that shows whether the system is grounded, tested, and built responsibly.
 
+For the MVP, the dashboard may be implemented as a script-generated report and/or a Streamlit view. It does not need to be a fully live production dashboard.
+
 The dashboard should summarize:
 
 - number of generated questions
@@ -306,7 +369,7 @@ The dashboard should summarize:
 - module-wise acceptance criteria status
 - export log availability for each member
 - agent usage file availability for each member
-- Git commit summary by member or branch
+- Git commit summary by member
 - token usage availability, if captured
 
 The dashboard must not fabricate token counts or evaluation scores.
@@ -323,30 +386,58 @@ The dashboard should help prove that the team did not rely on vibe coding.
 
 The project is acceptable if the following criteria are met.
 
+### MVP Demo Flow
+
+The MVP demo must support the following end-to-end flow:
+
+1. Student selects board, grade, subject, and chapter.
+2. System retrieves syllabus or study context for the selected scope.
+3. System generates a short practice paper from the selected chapter.
+4. Student submits answers for at least one objective and one subjective question.
+5. Objective answer is checked deterministically.
+6. Subjective answer is evaluated using rubric or expected-answer context.
+7. System updates the topic-level student profile.
+8. System identifies at least one weak topic.
+9. System generates remediation notes or extra practice for the weak topic.
+10. Student asks one doubt.
+11. Tutor chatbot answers using retrieved context or refuses if out of scope.
+12. Trust & Evaluation Dashboard reports grounding, tests, exports, token usage availability, and Git evidence.
+
 ### Functional Criteria
 
 - One end-to-end demo flow works.
 - The MVP supports CBSE Class 10 Mathematics for selected chapters.
 - Syllabus data follows the hierarchy: Board → Grade → Subject → Chapter → Topic → Learning Outcome.
+- The MVP corpus contains at least 5 indexed chunks per selected chapter.
 - RAG retrieval returns relevant chunks with metadata.
+- RAG retrieval logs retrieved chunk IDs for non-trivial generated answers.
 - Practice paper generation produces questions with topic, marks, difficulty, type, and source_context_id.
+- At least 90% of generated questions in the MVP demo have valid source_context_id.
+- Generated paper total marks match the requested paper configuration.
 - Objective answer evaluation works deterministically.
 - Subjective answer evaluation uses rubric or expected answer context.
+- Step-wise scoring is demonstrated for at least one worked Mathematics question.
 - Weakness detection identifies at least one weak topic from simulated student attempts.
-- Remediation generates topic-specific notes or practice.
+- Remediation generates topic-specific notes or practice using retrieved context.
 - Tutor chatbot answers are grounded in retrieved context.
 - Out-of-syllabus queries are flagged or refused.
 - Trust & Evaluation Dashboard reports grounding, tests, exports, token usage availability, and Git evidence.
+- RAG retrieval should complete within 5 seconds for a single query on the MVP corpus on a normal development machine.
+- Chatbot response generation should complete within a reasonable demo-time limit. The exact target must be finalized in the tutor module spec based on the selected LLM/API setup.
 
 ### Process Criteria
 
 - CLAUDE.md exists and defines project-level agent rules.
 - PROJECT_SPEC.md exists before implementation.
 - Each module has a module-specific SPEC file.
-- Each member has a Claude Code export log.
+- Each module spec includes a "Corrections made to AI output" section.
+- Each member has at least one raw Claude Code export log for their module.
 - Each member has an agent usage summary.
 - Git history shows distributed work.
+- Each member should make at least 5 meaningful commits, each linked to a spec, test, implementation phase, or documentation update.
+- Module work must be merged through pull requests into main.
 - Tests or verification scripts exist for core modules.
+- Each module must include at least one test or verification script covering its main acceptance criteria.
 - Final metrics are generated from actual scripts or command outputs.
 - No token usage or evaluation metric is fabricated.
 
@@ -391,8 +482,10 @@ Evidence folders:
 
 Important final artifacts:
 
+- data/sources.md
 - module SPEC files
 - test outputs
+- simulated student attempts fixture
 - evaluation summary
 - demo screenshots
 - per-member exports
@@ -416,6 +509,8 @@ Each module owner must follow:
 
 spec → review → plan → approve → implement phase → verify → commit → export
 
+The workflow reviewer/approver must be defined in TEAM_WORKFLOW.md. At minimum, the architect must review every module spec before implementation begins.
+
 The team must avoid having one person generate all files.
 
 Every member should show visible effort through:
@@ -436,6 +531,10 @@ The architect must maintain:
 - final report structure
 - submission checklist
 
+TEAM_TRACKER.md must assign a primary owner and supporting owner for each module before module implementation begins.
+
+TOKEN_USAGE.md must include one row per member and must record token/cost usage if available. If exact usage is unavailable, it must state that exact token count was not captured.
+
 ---
 
 ## 16. Professor-Facing Evidence
@@ -450,7 +549,7 @@ Evidence should include:
 - raw Claude Code exports from all members
 - agent usage summaries from all members
 - Git commit history
-- pull request history, if available
+- pull request history
 - tests and command outputs
 - evaluation dashboard output
 - final results file
