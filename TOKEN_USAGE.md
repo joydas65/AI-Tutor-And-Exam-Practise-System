@@ -1,13 +1,16 @@
-# Token Usage Log
+# TOKEN_USAGE.md — AI Tutor & Exam Practice System
 
-Tracks AI token consumption per session across the project lifecycle. Required for professor evaluation of responsible agentic coding.
+Log every Claude Code session immediately after it ends. Do not fabricate token counts or costs. If exact data is unavailable, write "Not captured" — not a blank or estimated value.
 
-| Date | Session ID | Tool | Prompt Tokens | Completion Tokens | Total | Phase | Purpose |
-|---|---|---|---|---|---|---|---|
-| | | | | | | | |
-
-## Notes
-
-- Log every Claude Code / LLM session immediately after it ends.
-- Export the full session transcript to `exports/` and link the filename in Notes.
-- Unusually high token counts should include a justification.
+| Member | Role | Claude Session Name | Export File | Model | Total Cost | Input Tokens | Output Tokens | Cache Read Tokens | Cache Write Tokens | Token/Cost Captured? | Notes |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Member 1 (Joy Das) | Architect + SDD Lead | ai-tutor-sdd-architect-session | `exports/joydas_architect_phase1_with_usage.md` | claude-sonnet-4-6 | $1.29 | 2.5k | 26.7k | 1.2m | 139.7k | Yes | Captured using /cost after architecture milestone. |
+| Member 2 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 3 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 5 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 6 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 7 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 8 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 9 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
+| Member 10 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | — |
