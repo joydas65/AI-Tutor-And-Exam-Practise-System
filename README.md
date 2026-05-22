@@ -1,6 +1,6 @@
 # AI Tutor & Exam Practice System
 
-A 10-member course project building an autonomous AI tutoring and exam practice system for Class 10 & 12 students.
+A 10-member course project building an AI Tutor & Exam Practice System. The MVP targets CBSE Class 10 Mathematics for selected chapters, while keeping the architecture extensible to other boards, grades, and subjects.
 
 ## Overview
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A 10-member course project building an autonomous AI tutoring and exam practice system for Class 10 & 12 school students. Two core flows:
+A 10-member course project building an AI Tutor & Exam Practice System. The MVP targets CBSE Class 10 Mathematics for selected chapters, while keeping the architecture extensible to other boards, grades, and subjects. Two core flows:
 
 1. **Doubt resolution** — retrieve and answer student queries grounded in curriculum material
 2. **Mock exams** — generate, administer, and evaluate practice tests
