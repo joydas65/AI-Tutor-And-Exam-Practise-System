@@ -1,0 +1,2 @@
+# Requirements — to be finalized in Phase 3 (Implementation planning)
+# Add dependencies here as modules are specced and implementation begins
